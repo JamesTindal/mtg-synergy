@@ -19,7 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\MtgSynergy.Core\MtgSynergy.Core.csproj" />
+    <ProjectReference Include="..\..\src\MtgSynergy.Domain\MtgSynergy.Domain.csproj" />
+    <ProjectReference Include="..\..\src\MtgSynergy.Application\MtgSynergy.Application.csproj" />
   </ItemGroup>
 
 </Project>

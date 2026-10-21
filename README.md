@@ -47,6 +47,31 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
+## 🏛 Clean Architecture Overview
+
+The solution adheres strictly to Clean Architecture principles with clear separation of concerns and dependency inversion:
+
+```
+backend/
+├── src/
+│   ├── MtgSynergy.Domain/         # Enterprise Core: Entities (Card), Domain Synergy Rules, Exceptions
+│   ├── MtgSynergy.Application/    # Use Cases: ICardRepository, ISynergyEngine, CardSynergyService, DTOs
+│   ├── MtgSynergy.Infrastructure/ # External Concerns: EF Core AppDbContext, CardRepository, ScryfallClient
+│   └── MtgSynergy.Api/            # Presentation: Modular Minimal Endpoints, Composition Root
+└── tests/
+    └── MtgSynergy.Tests/          # Unit tests for Domain Rules and Application Services
+
+frontend/
+├── src/
+│   ├── services/api.ts            # Isolated API client layer
+│   ├── hooks/                     # Custom React hooks (useCardSearch, useCardSynergies)
+│   ├── components/                # Decoupled UI components (SearchBar, Spotlight, SynergyCard)
+│   ├── types.ts                   # Domain & API TypeScript interfaces
+│   └── styles.css                 # Plain CSS theme
+```
+
+---
+
 ## 🧠 Extensible Synergy Engine Architecture
 
 The synergy engine is built around a pluggable rule pipeline implementing `ISynergyRule`:

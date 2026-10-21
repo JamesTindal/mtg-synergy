@@ -1,6 +1,6 @@
-using MtgSynergy.Core.Models;
+using MtgSynergy.Domain.Entities;
 
-namespace MtgSynergy.Core.Rules;
+namespace MtgSynergy.Domain.Rules;
 
 public class ColorSynergyRule : ISynergyRule
 {

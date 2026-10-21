@@ -1,6 +1,8 @@
-using MtgSynergy.Core.Models;
-using MtgSynergy.Core.Rules;
-using MtgSynergy.Core.Services;
+using MtgSynergy.Application.Interfaces.Repositories;
+using MtgSynergy.Application.Services;
+using MtgSynergy.Domain.Entities;
+using MtgSynergy.Domain.Exceptions;
+using MtgSynergy.Domain.Rules;
 using Xunit;
 
 namespace MtgSynergy.Tests;
@@ -121,5 +123,69 @@ public class RulesTests
         Assert.Equal("Vampire Lackey", results[0].Card.Name);
         Assert.True(results[0].TotalScore > 50); // Color + Tribal Payoff
         Assert.Equal(2, results[0].Contributions.Count);
+    }
+
+    [Fact]
+    public async Task CardSynergyService_ShouldThrow_WhenCardDoesNotExist()
+    {
+        var fakeRepo = new FakeCardRepository([]);
+        var engine = new SynergyEngine([]);
+        var service = new CardSynergyService(fakeRepo, engine);
+
+        await Assert.ThrowsAsync<CardNotFoundException>(() =>
+            service.GetCardSynergiesAsync(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task CardSynergyService_ShouldReturnSynergies_WhenCardExists()
+    {
+        var cardA = new Card
+        {
+            Id = Guid.NewGuid(),
+            Name = "Vampire Alpha",
+            TypeLine = "Creature — Vampire",
+            SetCode = "vow",
+            Colors = ["B"]
+        };
+
+        var cardB = new Card
+        {
+            Id = Guid.NewGuid(),
+            Name = "Vampire Beta",
+            TypeLine = "Creature — Vampire",
+            SetCode = "vow",
+            Colors = ["B"]
+        };
+
+        var fakeRepo = new FakeCardRepository([cardA, cardB]);
+        var rules = new List<ISynergyRule> { new TribalSynergyRule(), new ColorSynergyRule() };
+        var engine = new SynergyEngine(rules);
+        var service = new CardSynergyService(fakeRepo, engine);
+
+        var result = await service.GetCardSynergiesAsync(cardA.Id);
+
+        Assert.NotNull(result);
+        Assert.Equal(cardA.Name, result.SourceCard.Name);
+        Assert.Single(result.Synergies);
+        Assert.Equal(cardB.Name, result.Synergies[0].Card.Name);
+    }
+
+    private class FakeCardRepository : ICardRepository
+    {
+        private readonly List<Card> _cards;
+
+        public FakeCardRepository(List<Card> cards) => _cards = cards;
+
+        public Task<Card?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
+            Task.FromResult(_cards.FirstOrDefault(c => c.Id == id || c.ScryfallId == id));
+
+        public Task<List<Card>> SearchByNameAsync(string query, string? setCode, int limit, CancellationToken ct = default) =>
+            Task.FromResult(_cards.Where(c => c.Name.Contains(query, StringComparison.OrdinalIgnoreCase)).Take(limit).ToList());
+
+        public Task<List<Card>> GetCandidatesBySetAsync(string setCode, Guid excludeCardId, CancellationToken ct = default) =>
+            Task.FromResult(_cards.Where(c => c.SetCode.Equals(setCode, StringComparison.OrdinalIgnoreCase) && c.Id != excludeCardId).ToList());
+
+        public Task<int> UpsertBatchAsync(IEnumerable<Card> cards, CancellationToken ct = default) =>
+            Task.FromResult(cards.Count());
     }
 }

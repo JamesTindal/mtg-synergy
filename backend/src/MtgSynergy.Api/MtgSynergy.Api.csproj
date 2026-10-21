@@ -2,7 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MtgSynergy.Infrastructure\MtgSynergy.Infrastructure.csproj" />
-    <ProjectReference Include="..\MtgSynergy.Core\MtgSynergy.Core.csproj" />
+    <ProjectReference Include="..\MtgSynergy.Application\MtgSynergy.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

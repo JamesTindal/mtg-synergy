@@ -1,4 +1,4 @@
-namespace MtgSynergy.Core.Models;
+namespace MtgSynergy.Domain.Entities;
 
 public class Card
 {

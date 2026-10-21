@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Card } from '../types';
+import { useCardSearch } from '../hooks/useCardSearch';
 
 interface SearchBarProps {
   onSelectCard: (card: Card) => void;
@@ -7,48 +8,26 @@ interface SearchBarProps {
 }
 
 export const SearchBar: React.FC<SearchBarProps> = ({ onSelectCard, selectedCardName }) => {
-  const [query, setQuery] = useState(selectedCardName || '');
-  const [results, setResults] = useState<Card[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const {
+    query,
+    setQuery,
+    results,
+    isOpen,
+    setIsOpen,
+    isLoading,
+    highlightedIndex,
+    setHighlightedIndex,
+    clear
+  } = useCardSearch(selectedCardName);
+
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (selectedCardName) {
       setQuery(selectedCardName);
     }
-  }, [selectedCardName]);
+  }, [selectedCardName, setQuery]);
 
-  // Debounced search
-  useEffect(() => {
-    if (!query.trim() || query.length < 2) {
-      setResults([]);
-      setIsOpen(false);
-      return;
-    }
-
-    const handler = setTimeout(async () => {
-      setIsLoading(true);
-      try {
-        const res = await fetch(`/api/cards/search?q=${encodeURIComponent(query)}&set=vow&limit=8`);
-        if (res.ok) {
-          const data: Card[] = await res.json();
-          setResults(data);
-          setIsOpen(data.length > 0);
-          setHighlightedIndex(-1);
-        }
-      } catch (err) {
-        console.error('Search error:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    }, 200);
-
-    return () => clearTimeout(handler);
-  }, [query]);
-
-  // Close on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
@@ -57,7 +36,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSelectCard, selectedCard
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [setIsOpen]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen || results.length === 0) return;
@@ -84,12 +63,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSelectCard, selectedCard
     onSelectCard(card);
   };
 
-  const handleClear = () => {
-    setQuery('');
-    setResults([]);
-    setIsOpen(false);
-  };
-
   return (
     <div className="search-container" ref={wrapperRef}>
       <div className="search-input-wrapper">
@@ -104,7 +77,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSelectCard, selectedCard
           onKeyDown={handleKeyDown}
         />
         {query && (
-          <button className="clear-search-btn" onClick={handleClear} title="Clear search">
+          <button className="clear-search-btn" onClick={clear} title="Clear search">
             ✕
           </button>
         )}

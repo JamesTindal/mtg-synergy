@@ -1,10 +1,11 @@
 using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
-using MtgSynergy.Core.Models;
+using MtgSynergy.Application.Interfaces.Services;
+using MtgSynergy.Domain.Entities;
 
 namespace MtgSynergy.Infrastructure.Scryfall;
 
-public class ScryfallClient
+public class ScryfallClient : IScryfallClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<ScryfallClient> _logger;

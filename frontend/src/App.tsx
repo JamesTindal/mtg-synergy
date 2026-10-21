@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Card, SynergyResponse } from './types';
+import { useEffect } from 'react';
+import { useCardSynergies } from './hooks/useCardSynergies';
 import { SearchBar } from './components/SearchBar';
 import { CardSpotlight } from './components/CardSpotlight';
 import { SynergyCard } from './components/SynergyCard';
@@ -14,46 +14,19 @@ const FEATURED_CARDS = [
 ];
 
 export function App() {
-  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
-  const [synergyData, setSynergyData] = useState<SynergyResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    selectedCard,
+    synergyData,
+    isLoading,
+    error,
+    selectCard,
+    selectByName
+  } = useCardSynergies();
 
-  const fetchCardSynergies = async (card: Card) => {
-    setSelectedCard(card);
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch(`/api/cards/${card.id}/synergies?minScore=20&limit=30`);
-      if (!res.ok) throw new Error('Failed to load card synergies.');
-      const data: SynergyResponse = await res.json();
-      setSynergyData(data);
-    } catch (err: any) {
-      setError(err.message || 'Error fetching synergies');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleQuickPick = async (name: string) => {
-    try {
-      const res = await fetch(`/api/cards/search?q=${encodeURIComponent(name)}&set=vow&limit=1`);
-      if (res.ok) {
-        const cards: Card[] = await res.json();
-        if (cards.length > 0) {
-          fetchCardSynergies(cards[0]);
-        }
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // Load a default card on initial visit (e.g. Olivia, Crimson Bride)
+  // Load default featured card on initial visit
   useEffect(() => {
-    handleQuickPick('Olivia, Crimson Bride');
-  }, []);
+    selectByName('Olivia, Crimson Bride');
+  }, [selectByName]);
 
   return (
     <div className="app-container">
@@ -66,7 +39,7 @@ export function App() {
       </header>
 
       <SearchBar
-        onSelectCard={fetchCardSynergies}
+        onSelectCard={selectCard}
         selectedCardName={selectedCard?.name}
       />
 
@@ -76,7 +49,7 @@ export function App() {
           <button
             key={name}
             className="quick-pick-pill"
-            onClick={() => handleQuickPick(name)}
+            onClick={() => selectByName(name)}
           >
             {name}
           </button>
@@ -89,7 +62,9 @@ export function App() {
         {isLoading && (
           <div className="state-container">
             <div className="state-icon">⏳</div>
-            <p className="state-text">Analyzing game mechanics & rule interactions for {selectedCard?.name}...</p>
+            <p className="state-text">
+              Analyzing game mechanics & rule interactions for {selectedCard?.name}...
+            </p>
           </div>
         )}
 
@@ -120,7 +95,7 @@ export function App() {
                   <SynergyCard
                     key={match.card.id}
                     match={match}
-                    onSelectCard={fetchCardSynergies}
+                    onSelectCard={selectCard}
                   />
                 ))}
               </div>

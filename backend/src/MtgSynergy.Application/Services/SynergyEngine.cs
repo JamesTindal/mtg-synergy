@@ -1,9 +1,11 @@
-using MtgSynergy.Core.Models;
-using MtgSynergy.Core.Rules;
+using MtgSynergy.Application.DTOs;
+using MtgSynergy.Application.Interfaces.Services;
+using MtgSynergy.Domain.Entities;
+using MtgSynergy.Domain.Rules;
 
-namespace MtgSynergy.Core.Services;
+namespace MtgSynergy.Application.Services;
 
-public class SynergyEngine
+public class SynergyEngine : ISynergyEngine
 {
     private readonly List<ISynergyRule> _rules;
 
@@ -12,9 +14,9 @@ public class SynergyEngine
         _rules = rules.OrderBy(r => r.Priority).ToList();
     }
 
-    public List<SynergyMatch> FindSynergies(Card sourceCard, IEnumerable<Card> candidates, double minScore = 20, int limit = 30)
+    public List<SynergyMatchDto> FindSynergies(Card sourceCard, IEnumerable<Card> candidates, double minScore = 20, int limit = 30)
     {
-        var matches = new List<SynergyMatch>();
+        var matches = new List<SynergyMatchDto>();
 
         foreach (var candidate in candidates)
         {
@@ -22,7 +24,7 @@ public class SynergyEngine
                 (sourceCard.ScryfallId != Guid.Empty && candidate.ScryfallId == sourceCard.ScryfallId))
                 continue;
 
-            var contributions = new List<SynergyContribution>();
+            var contributions = new List<SynergyContributionDto>();
             double totalScore = 0;
 
             foreach (var rule in _rules)
@@ -30,7 +32,12 @@ public class SynergyEngine
                 var contribution = rule.Evaluate(sourceCard, candidate);
                 if (contribution != null)
                 {
-                    contributions.Add(contribution);
+                    contributions.Add(new SynergyContributionDto(
+                        contribution.RuleName,
+                        contribution.Score,
+                        contribution.Reason,
+                        contribution.Category
+                    ));
                     totalScore += contribution.Score;
                 }
             }
@@ -40,13 +47,12 @@ public class SynergyEngine
 
             if (totalScore >= minScore)
             {
-                matches.Add(new SynergyMatch
-                {
-                    Card = candidate,
-                    TotalScore = totalScore,
-                    Contributions = contributions,
-                    Reasons = contributions.Select(c => c.Reason).Distinct().ToList()
-                });
+                matches.Add(new SynergyMatchDto(
+                    CardDto.FromEntity(candidate),
+                    totalScore,
+                    contributions.Select(c => c.Reason).Distinct().ToList(),
+                    contributions
+                ));
             }
         }
 

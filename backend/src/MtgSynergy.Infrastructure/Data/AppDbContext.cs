@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using MtgSynergy.Core.Models;
+using MtgSynergy.Domain.Entities;
 
 namespace MtgSynergy.Infrastructure.Data;
 
