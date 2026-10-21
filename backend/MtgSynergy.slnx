@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MtgSynergy.Api/MtgSynergy.Api.csproj" />
+    <Project Path="src/MtgSynergy.Core/MtgSynergy.Core.csproj" />
+    <Project Path="src/MtgSynergy.Infrastructure/MtgSynergy.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MtgSynergy.Tests/MtgSynergy.Tests.csproj" />
+  </Folder>
+</Solution>
