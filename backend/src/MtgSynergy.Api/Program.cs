@@ -56,13 +56,13 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "healthy", timestamp =
 app.MapGet("/api/cards/search", async (
     [FromQuery] string? q,
     [FromQuery] string? set,
-    [FromQuery] int limit,
+    [FromQuery] int? limit,
     AppDbContext db) =>
 {
     if (string.IsNullOrWhiteSpace(q))
         return Results.Ok(Array.Empty<object>());
 
-    int maxResults = limit > 0 ? Math.Min(limit, 50) : 10;
+    int maxResults = limit.HasValue && limit.Value > 0 ? Math.Min(limit.Value, 50) : 10;
     string query = q.Trim().ToLower();
 
     var queryable = db.Cards.AsNoTracking();
@@ -106,8 +106,8 @@ app.MapGet("/api/cards/{id:guid}", async (Guid id, AppDbContext db) =>
 // Calculate and retrieve synergies for a specific card
 app.MapGet("/api/cards/{id:guid}/synergies", async (
     Guid id,
-    [FromQuery] double minScore,
-    [FromQuery] int limit,
+    [FromQuery] double? minScore,
+    [FromQuery] int? limit,
     AppDbContext db,
     SynergyEngine engine) =>
 {
@@ -122,8 +122,8 @@ app.MapGet("/api/cards/{id:guid}/synergies", async (
         .Where(c => c.SetCode == sourceCard.SetCode && c.Id != sourceCard.Id)
         .ToListAsync();
 
-    double threshold = minScore > 0 ? minScore : 20.0;
-    int maxLimit = limit > 0 ? Math.Min(limit, 50) : 30;
+    double threshold = minScore.HasValue && minScore.Value > 0 ? minScore.Value : 20.0;
+    int maxLimit = limit.HasValue && limit.Value > 0 ? Math.Min(limit.Value, 50) : 30;
 
     var synergies = engine.FindSynergies(sourceCard, candidates, threshold, maxLimit);
 
